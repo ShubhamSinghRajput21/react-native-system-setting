@@ -222,7 +222,7 @@ public class SystemSetting extends ReactContextBaseJavaModule implements Activit
 
     @ReactMethod
     public void setBrightness(float val, Promise promise) {
-        final int brightness = (int) (val * 255);
+        final int brightness = (int) (val * getMaxBrightness());
         checkAndSet(Settings.System.SCREEN_BRIGHTNESS, brightness, promise);
     }
 
@@ -252,7 +252,7 @@ public class SystemSetting extends ReactContextBaseJavaModule implements Activit
             float result = curActivity.getWindow().getAttributes().screenBrightness;
             if (result < 0) {
                 int val = Settings.System.getInt(mContext.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS);
-                promise.resolve(val * 1.0f / 255);
+                promise.resolve(val * 1.0f / getMaxBrightness());
             } else {
                 promise.resolve(result);
             }
@@ -272,11 +272,27 @@ public class SystemSetting extends ReactContextBaseJavaModule implements Activit
     public void getBrightness(Promise promise) {
         try {
             int val = Settings.System.getInt(mContext.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS);
-            promise.resolve(val * 1.0f / 255);
+            promise.resolve(val * 1.0f / getMaxBrightness());
         } catch (Settings.SettingNotFoundException e) {
             Log.e(TAG, "err", e);
             promise.reject("-1", "get brightness fail", e);
         }
+    }
+
+    @ReactMethod
+    private static int getMaxBrightness() {
+        int brightness = 255;
+        try {
+            Resources system = Resources.getSystem();
+            int resId = system.getIdentifier("config_screenBrightnessSettingMaximum", "integer", "android");
+            if (resId != 0) {
+                brightness = system.getInteger(resId);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return brightness;
     }
 
     @ReactMethod
